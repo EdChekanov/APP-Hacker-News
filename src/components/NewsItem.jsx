@@ -45,7 +45,7 @@ const NewsItem = () => {
 
   const handleRefresh = () => {
     dispatch(
-      loadComments({ comments: newsItem?.kids, parentId: newsItem?.id }),
+      loadComments({ comments: newsItem?.kids || [], parentId: newsItem?.id }),
     );
   };
   const showAnswers = (comment) => {
