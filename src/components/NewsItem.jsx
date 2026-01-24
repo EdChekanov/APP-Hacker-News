@@ -6,40 +6,88 @@ import {
   Card,
   Typography,
   Tag,
-  Collapse,
   Spin,
-  Divider,
+  Alert,
 } from 'antd';
 import {
   ArrowLeftOutlined,
   ReloadOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { getNewsItem, loadComments } from '../redux/api/newsApi';
+import {
+  selectCommentLoading,
+  selectComments,
+  selectError,
+  selectLoading,
+  selectNewsItem,
+} from '../redux/slices/newsItemSlice';
+import { formatTimeAgo } from '../utils/formatTimeAgo';
 
 const NewsItem = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const newsItem = {
-    by: 'rbanffy',
-    descendants: 0,
-    id: 46721743,
-    score: 1,
-    time: 1769100488,
-    title: 'STL Editing with FreeCAD',
-    type: 'story',
-    url: 'https://hackaday.com/2026/01/22/stl-editing-with-freecad/',
+  const newsItem = useSelector(selectNewsItem);
+  const comments = useSelector(selectComments);
+  const loading = useSelector(selectLoading);
+  const commentsLoading = useSelector(selectCommentLoading);
+  const error = useSelector(selectError);
+
+  const [chosenAnswers, setChosenAnswers] = useState(null);
+
+  const { Title, Text } = Typography;
+
+  const handleRefresh = () => {
+    dispatch(
+      loadComments({ comments: newsItem?.kids, parentId: newsItem?.id }),
+    );
   };
-  const comments = [];
-  const commentLoading = true;
+  const showAnswers = (comment) => {
+    setChosenAnswers(comment.id);
+    dispatch(
+      loadComments({
+        comments: comment.kids,
+        parentId: comment.id,
+        flag: 'subcomment',
+      }),
+    );
+  };
 
-  const { Title, Text, Paragraph } = Typography;
+  useEffect(() => {
+    dispatch(getNewsItem(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleRefresh = () => {};
-  const loadNestedComments = () => {};
+  if (error) {
+    return (
+      <Row justify="center">
+        <Col xs={24}>
+          <Alert
+            title="Ошибка загрузки новости"
+            description={error}
+            type="error"
+            showIcon
+            action={
+              <Button onClick={() => window.location.reload()} size="small">
+                Попробовать снова
+              </Button>
+            }
+          />
+        </Col>
+      </Row>
+    );
+  }
+
+  if (!newsItem) return <Title level={2}>Загрузка...</Title>;
 
   return (
-    <>
+    <Spin spinning={loading} indicator={<LoadingOutlined />} size="large">
       <Row
         gutter={[0, 32]}
         style={{ maxWidth: 1200, margin: '0 auto', padding: '20px' }}
@@ -50,7 +98,7 @@ const NewsItem = () => {
               К списку новостей
             </Button>
             <Button
-              loading={commentLoading}
+              loading={commentsLoading}
               icon={<ReloadOutlined />}
               onClick={handleRefresh}
             >
@@ -59,7 +107,7 @@ const NewsItem = () => {
           </Space>
         </Col>
 
-        <Col xs={24} lg={16}>
+        <Col xs={24}>
           <Card>
             <Title level={2}>
               {newsItem.title}
@@ -97,79 +145,66 @@ const NewsItem = () => {
           </Card>
         </Col>
 
-        <Col xs={24} lg={8}>
+        <Col xs={24}>
           <Card>
-            <Title level={4}>Комментарии ({comments.length})</Title>
-            <Spin
-              spinning={commentLoading && !comments.length}
-              indicator={<LoadingOutlined />}
-              size="small"
-            >
-              <Collapse
-                accordion
-                style={{ maxHeight: 600, overflow: 'auto' }}
-                ghost
-                items={comments.map((comment) => ({
-                  key: comment.id,
-                  label: (
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <Text strong style={{ marginRight: 8 }}>
-                        {comment.by}
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {new Date(comment.time * 1000).toLocaleString()}
-                      </Text>
+            <Title level={4}>
+              Комментарии ({comments[newsItem.id]?.length || 0})
+            </Title>
+            <ul className="comment-list">
+              {comments[newsItem.id]?.map((comment) => (
+                <li className="comment-item" key={comment.id}>
+                  <div className="comment-header">
+                    <span className="author">{comment.by}</span>
+                    <span className="posted">
+                      ({formatTimeAgo(comment.time * 1000)})
+                    </span>
+                  </div>
+                  <div
+                    className="comment-text"
+                    dangerouslySetInnerHTML={{ __html: comment.text }}
+                  />
+                  {comment.kids && (
+                    <div className="answers">
+                      <button onClick={() => showAnswers(comment)}>
+                        {comment.kids.length} ответов
+                      </button>
+                      {chosenAnswers === comment.id && (
+                        <ul className="comment-list">
+                          {comments[comment.id] ? (
+                            comments[comment.id].map((answer) => (
+                              <li key={answer.id} className="comment-item">
+                                <div className="comment-header">
+                                  <span className="author">{answer.by}</span>
+                                  <span className="posted">
+                                    ({formatTimeAgo(answer.time * 1000)})
+                                  </span>
+                                </div>
+                                <div
+                                  className="comment-text"
+                                  dangerouslySetInnerHTML={{
+                                    __html: answer.text,
+                                  }}
+                                />
+                              </li>
+                            ))
+                          ) : (
+                            <Spin
+                              spinning={true}
+                              indicator={<LoadingOutlined />}
+                              size="small"
+                            />
+                          )}
+                        </ul>
+                      )}
                     </div>
-                  ),
-                  children: (
-                    <>
-                      <Paragraph ellipsis={{ rows: 10 }}>
-                        {comment.text}
-                      </Paragraph>
-
-                      {comment.expanded && !comment.kidsData?.length && (
-                        <Divider style={{ margin: '16px 0' }} />
-                      )}
-
-                      {comment.expanded && (
-                        <Collapse
-                          style={{ background: 'transparent', border: 'none' }}
-                          ghost
-                          items={comment.kidsData.map((kidComment) => ({
-                            key: kidComment.id,
-                            children: (
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: kidComment.text,
-                                }}
-                              />
-                            ),
-                          }))}
-                        />
-                      )}
-                    </>
-                  ),
-                  extra:
-                    comment.kids?.length > 0 ? (
-                      <Button
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          loadNestedComments(comment);
-                        }}
-                      >
-                        {comment.expanded
-                          ? 'Свернуть'
-                          : `${comment.kids.length} ответов`}
-                      </Button>
-                    ) : null,
-                }))}
-              />
-            </Spin>
+                  )}
+                </li>
+              ))}
+            </ul>
           </Card>
         </Col>
       </Row>
-    </>
+    </Spin>
   );
 };
 

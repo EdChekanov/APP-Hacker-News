@@ -4,6 +4,7 @@ import NewsItem from './components/NewsItem';
 import Main from './components/Main';
 
 import './App.css';
+import './styles/newsItem.scss';
 
 const App = () => {
   return (

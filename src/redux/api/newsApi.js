@@ -18,3 +18,40 @@ export const getNews = createAsyncThunk('news/getNews', async (_, thunkAPI) => {
     return thunkAPI.rejectWithValue(error.message);
   }
 });
+
+export const getNewsItem = createAsyncThunk(
+  'newsItem/getNewsItem',
+  async (id, thunkAPI) => {
+    try {
+      const response = await api.get(`/item/${id}.json`);
+      return thunkAPI.fulfillWithValue(response.data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);
+
+export const loadComments = createAsyncThunk(
+  'newsItem/loadComments',
+  async ({ comments, parentId, flag = null }, thunkAPI) => {
+    try {
+      const commentPromises = comments.map((commentId) => {
+        return api
+          .get(`/item/${commentId}.json`)
+          .then((resp) => resp.data)
+          .catch(() => null);
+      });
+
+      const loadedComments = await Promise.all(commentPromises);
+      const validComments = loadedComments.filter(Boolean);
+
+      return thunkAPI.fulfillWithValue({
+        comments: validComments,
+        parentId,
+        flag,
+      });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  },
+);

@@ -46,43 +46,41 @@ const Main = () => {
   }
 
   return (
-    <>
-      <Spin spinning={loading} indicator={<LoadingOutlined />} size="large">
-        <Row gutter={[16, 16]}>
+    <Spin spinning={loading} indicator={<LoadingOutlined />} size="large">
+      <Row gutter={[16, 16]}>
+        <Col xs={24}>
+          <Title level={2} strong>
+            Hacker News
+          </Title>
+        </Col>
+        {!loading && (
           <Col xs={24}>
-            <Title level={2} strong>
-              Hacker News
-            </Title>
+            <Button
+              onClick={() => dispatch(getNews())}
+              type="primary"
+              icon={<ReloadOutlined />}
+            >
+              Refresh news
+            </Button>
           </Col>
-          {!loading && (
-            <Col xs={24}>
-              <Button
-                onClick={() => dispatch(getNews())}
-                type="primary"
-                icon={<ReloadOutlined />}
-              >
-                Refresh news
-              </Button>
-            </Col>
-          )}
-          {news.map((item) => (
-            <Col xs={24} sm={12} lg={8} xl={6} key={item.id}>
-              <Card
-                title={item.title}
-                hoverable
-                onClick={() => navigate(`/${item.id}`)}
-              >
-                <Space orientation="vertical" size="small">
-                  <span>⭐ {item.score}</span>
-                  <span>👤 {item.by}</span>
-                  <span>{new Date(item.time * 1000).toLocaleString()}</span>
-                </Space>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Spin>
-    </>
+        )}
+        {news.map((item) => (
+          <Col xs={24} sm={12} lg={8} xl={6} key={item.id}>
+            <Card
+              title={item.title}
+              hoverable
+              onClick={() => navigate(`/${item.id}`)}
+            >
+              <Space orientation="vertical" size="small">
+                <span>⭐ {item.score}</span>
+                <span>👤 {item.by}</span>
+                <span>{new Date(item.time * 1000).toLocaleString()}</span>
+              </Space>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </Spin>
   );
 };
 
