@@ -35,7 +35,7 @@ const Main = () => {
             type="error"
             showIcon
             action={
-              <Button onClick={() => window.location.reload()} size="small">
+              <Button onClick={() => dispatch(getNews())} size="small">
                 Попробовать снова
               </Button>
             }

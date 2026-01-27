@@ -33,7 +33,7 @@ export const getNewsItem = createAsyncThunk(
 
 export const loadComments = createAsyncThunk(
   'newsItem/loadComments',
-  async ({ comments, parentId, flag = null }, thunkAPI) => {
+  async ({ comments, parentId }, thunkAPI) => {
     try {
       const commentPromises = comments.map((commentId) => {
         return api
@@ -48,7 +48,6 @@ export const loadComments = createAsyncThunk(
       return thunkAPI.fulfillWithValue({
         comments: validComments,
         parentId,
-        flag,
       });
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);

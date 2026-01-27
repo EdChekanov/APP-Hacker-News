@@ -7,11 +7,21 @@ const initialState = {
   loading: false,
   commentsLoading: false,
   error: null,
+  loadStack: [],
 };
 
 const newsItemSlice = createSlice({
   name: 'newsItem',
   initialState,
+  reducers: {
+    resetComments: (state) => {
+      state.comments = {};
+      state.loadStack = [];
+    },
+    addToLoadStack: (state, action) => {
+      state.loadStack.push(action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getNewsItem.fulfilled, (state, action) => {
@@ -47,6 +57,7 @@ const newsItemSlice = createSlice({
     selectLoading: (state) => state.loading,
     selectCommentLoading: (state) => state.commentsLoading,
     selectError: (state) => state.error,
+    selectLoadStack: (state) => state.loadStack,
   },
 });
 
@@ -56,5 +67,7 @@ export const {
   selectLoading,
   selectCommentLoading,
   selectError,
+  selectLoadStack,
 } = newsItemSlice.selectors;
+export const { resetComments, addToLoadStack } = newsItemSlice.actions;
 export default newsItemSlice.reducer;

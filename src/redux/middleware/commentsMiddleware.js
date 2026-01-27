@@ -1,7 +1,16 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
+
 import { getNewsItem, loadComments } from '../api/newsApi';
+import { resetComments } from '../slices/newsItemSlice';
 
 export const commentsMiddleware = createListenerMiddleware();
+
+commentsMiddleware.startListening({
+  actionCreator: getNewsItem.pending,
+  effect: (action, listenerApi) => {
+    listenerApi.dispatch(resetComments());
+  },
+});
 
 commentsMiddleware.startListening({
   actionCreator: getNewsItem.fulfilled,

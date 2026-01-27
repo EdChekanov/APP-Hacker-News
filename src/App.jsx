@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router';
 
-import NewsItem from './components/NewsItem';
+import NewsItem from './components/news-item/NewsItem';
 import Main from './components/Main';
 
 import './App.css';
